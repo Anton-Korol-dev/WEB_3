@@ -36,14 +36,18 @@ internal sealed class UserService : IUserService
         return user.Id;
     }
 
-    public async Task DeleteUser(UserDeleteModel model)
+    public async Task<int> DeleteUser(UserDeleteModel model)
     {
-        var user = await _context.Users
-                       .FirstOrDefaultAsync(user => user.Id == model.Id)
-                   ?? throw new Exception("User not found");
-
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        try
+        {
+            var user = await _context.Users
+                           .FirstOrDefaultAsync(user => user.Id == model.Id)
+                       ?? throw new Exception("User not found");
+            _context.Users.Remove(user);
+            return await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        { return -1; }
     }
 
     public async Task<List<User>> GetAllUsers(int page, int pageSize, string? sortBy, bool? isAsc, string? search)
@@ -56,7 +60,7 @@ internal sealed class UserService : IUserService
             "Email" when !isAsc.Value => _context.Users.OrderByDescending(user => user.Email),
             "Gender" when isAsc!.Value => _context.Users.OrderBy(user => user.GenderId),
             "Gender" when !isAsc.Value => _context.Users.OrderBy(user => user.GenderId),
-            _  => _context.Users.OrderBy(user => user.Id),
+            _ => _context.Users.OrderBy(user => user.Id),
         };
 
         // Apply search if search is not null
@@ -65,14 +69,11 @@ internal sealed class UserService : IUserService
             userQuery = userQuery.Where(e => e.Name.Contains(search));
         }
 
-        var users  = await userQuery
+        var users = await userQuery
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .AsNoTracking()
-            .Include(x => x.Gender)
             .ToListAsync();
-
-
         return users;
     }
 
@@ -87,5 +88,6 @@ internal sealed class UserService : IUserService
         user.GenderId = model.GenderId ?? user.GenderId;
 
         _context.Users.Update(user);
+        _context.SaveChanges();
     }
 }
