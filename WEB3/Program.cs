@@ -17,6 +17,9 @@ builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>(servi
     return new SqlConnectionFactory(configuration);
 });
 
+builder.Services.AddSwaggerGen();
+builder.Services.AddEndpointsApiExplorer();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -28,6 +31,12 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WEB4 v1"));
 }
 
 app.UseHttpsRedirection();
